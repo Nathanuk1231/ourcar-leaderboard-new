@@ -1,1 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Guitar & Bass Tabs + YouTube</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      height: 100%;
+      background: linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet);
+      background-size: 400% 400%;
+      transition: background-position 0.2s ease;
+      color: white;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    main {
+      text-align: center;
+      padding: 2rem;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      text-shadow: 2px 2px #000;
+    }
+
+    input {
+      padding: 0.7rem;
+      width: 80%;
+      max-width: 400px;
+      border-radius: 10px;
+      border: none;
+      font-size: 1.1rem;
+    }
+
+    button {
+      padding: 0.7rem 1.2rem;
+      border: none;
+      border-radius: 10px;
+      margin-top: 1rem;
+      background-color: #1db954;
+      color: white;
+      font-size: 1.1rem;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #1ed760;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    a {
+      color: #fffc;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    iframe {
+      margin-top: 2rem;
+      width: 100%;
+      max-width: 560px;
+      height: 315px;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>🎸 Guitar & Bass Tab Finder 🎶</h1>
+    <input id="songInput" type="text" placeholder="Enter song name..." />
+    <br>
+    <button onclick="searchTabs()">Search Tabs + Video</button>
+
+    <div id="results"></div>
+    <div id="video"></div>
+  </main>
+
+  <script>
+    const YOUTUBE_API_KEY = 'AIzaSyDjngJRxWpKNQdE0GV4sCkSWJcQtTXV0Ug'; // Your real API key
+
+    async function searchTabs() {
+      const query = document.getElementById("songInput").value.trim();
+      const resultsDiv = document.getElementById("results");
+      const videoDiv = document.getElementById("video");
+      resultsDiv.innerHTML = "";
+      videoDiv.innerHTML = "";
+
+      if (!query) {
+        resultsDiv.innerHTML = "<p>Please enter a song name.</p>";
+        return;
+      }
+
+      // Songsterr API for tabs
+      const tabUrl = `https://www.songsterr.com/a/ra/songs.json?pattern=${encodeURIComponent(query)}`;
+      const tabResp = await fetch(tabUrl);
+      const songs = await tabResp.json();
+
+      if (songs.length === 0) {
+        resultsDiv.innerHTML = "<p>No tabs found on Songsterr.</p>";
+      } else {
+        const list = document.createElement("ul");
+        songs.slice(0, 5).forEach(song => {
+          const tabLink = `https://www.songsterr.com/a/wsa/${song.artist.name.replace(/\s+/g, '-').toLowerCase()}-${song.title.replace(/\s+/g, '-').toLowerCase()}-tab-s${song.id}`;
+          const li = document.createElement("li");
+          li.innerHTML = `<a href="${tabLink}" target="_blank">${song.title} by ${song.artist.name}</a>`;
+          list.appendChild(li);
+        });
+        resultsDiv.appendChild(list);
+      }
+
+      // YouTube API for video
+      const ytResp = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&q=${encodeURIComponent(query)}&key=${YOUTUBE_API_KEY}`);
+      const ytData = await ytResp.json();
+      if (ytData.items && ytData.items.length > 0) {
+        const videoId = ytData.items[0].id.videoId;
+        videoDiv.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}" allowfullscreen></iframe>`;
+      } else {
+        videoDiv.innerHTML = "<p>No video found.</p>";
+      }
+    }
+
+    // Rainbow background shifts with phone movement
+    window.addEventListener('deviceorientation', function(event) {
+      const x = Math.min(Math.max(event.gamma, -45), 45); // left/right tilt
+      const y = Math.min(Math.max(event.beta, -45), 45);  // front/back tilt
+      const xPos = ((x + 45) / 90) * 100;
+      const yPos = ((y + 45) / 90) * 100;
+      document.body.style.backgroundPosition = `${xPos}% ${yPos}%`;
+    });
+  </script>
+</body>
+</html>
 
